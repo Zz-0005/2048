@@ -25,7 +25,9 @@
 |------|------|
 | [`docs/PRD-2048-v2.0.md`](docs/PRD-2048-v2.0.md) | 已批准的 PRD v2.0，浏览器可直接读（由 .docx 渲染，见 `tools/prd_to_markdown.py`） |
 | [`docs/PRD-2048-v2.0.docx`](docs/PRD-2048-v2.0.docx) | PRD 原件（评审签署版本） |
+| [`docs/prd.html`](docs/prd.html) | PRD 网页版（`tools/prd_to_html.mjs` 生成，线上见 https://zz-0005.github.io/2048/docs/prd.html ） |
 | [`docs/release-v2.0.0.md`](docs/release-v2.0.0.md) | 发布说明：定位、范围、验证记录、审查记录、已知限制 |
+| [`docs/release-notes-v2.0.0.md`](docs/release-notes-v2.0.0.md) | GitHub Release 正文（含试玩与验证摘要） |
 | [`docs/code-review-2026-10-20.md`](docs/code-review-2026-10-20.md) | 交付前独立审阅：缺陷、红证据、判定不改的理由、残留风险 |
 | [`docs/ledger.md`](docs/ledger.md) | 决策记录（无 git 环境时期起执行记录，现随仓库保留） |
 | [`docs/plans/`](docs/plans/) | 实施计划与逐步勾选记录 |
