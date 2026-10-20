@@ -1,5 +1,6 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright-core';
 import { startServer } from './serve.mjs';
 
@@ -314,7 +315,9 @@ test('footer shows the version, licence and upstream attribution', async () => {
   try {
     await page.goto(baseUrl);
     const text = await page.locator('.footer').textContent();
-    assert.match(text, /1\.0\.0/);
+    const version = readFileSync(new URL('../VERSION', import.meta.url), 'utf8').trim();
+    assert.match(version, /^\d+\.\d+\.\d+$/, 'VERSION must be a semver');
+    assert.ok(text.includes('版本 ' + version), 'the footer must show the version from the VERSION file');
     assert.match(text, /MIT/);
     assert.match(text, /gabrielecirulli\/2048/);
     assert.match(text, /Gabriele Cirulli/);
