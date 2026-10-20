@@ -165,3 +165,21 @@ local storage. Its CSP is relaxed to inline script/style - a single file cannot 
 external sources - and `tests/standalone.e2e.test.mjs` proves it boots under `file://`
 with no console errors, opens both dialogs, handles CDP touch swipes, and persists the
 best score across a reload.
+
+## v2.0.0 release (2026-10-20)
+
+Version bumped in `VERSION`, `package.json` and the page footer; `2048-standalone.html`
+rebuilt and the screenshots regenerated, because the footer text is part of the pixel
+target. Positioning, scope, review and verification records live in
+`docs/release-v2.0.0.md`.
+
+One test had to change because of the bump: `layout.e2e.test.mjs` hardcoded `/1\.0\.0/`
+in the footer assertion and correctly went red. It now reads `VERSION` and asserts the
+page shows exactly that string, so a future bump cannot drift silently.
+
+GitHub upload status at the time of writing: blocked on repository creation. `Zz-0005/2048`
+does not exist, `gh` has no token, `github.com:443` is unreachable from this machine
+(`api.github.com` and SSH are fine), and `git init` is refused under `F:\` - only the harness
+workspace accepts `.git`. The staged repository at
+`C:\Users\Zz\Documents\deepseek-harness\default-workspace\2048-github` holds the commit
+ready to push (`b0122ff`).
