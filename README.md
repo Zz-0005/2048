@@ -19,6 +19,17 @@
 - 只持久化最高分（`bestScore`）；按 PRD `D-003` 默认不交付 P1 当前局恢复，页面不承诺“关闭后继续”
 - 不接入任何远端分析，事件仅走本地白名单接口
 
+## 文档
+
+| 文档 | 内容 |
+|------|------|
+| [`docs/PRD-2048-v2.0.md`](docs/PRD-2048-v2.0.md) | 已批准的 PRD v2.0，浏览器可直接读（由 .docx 渲染，见 `tools/prd_to_markdown.py`） |
+| [`docs/PRD-2048-v2.0.docx`](docs/PRD-2048-v2.0.docx) | PRD 原件（评审签署版本） |
+| [`docs/release-v2.0.0.md`](docs/release-v2.0.0.md) | 发布说明：定位、范围、验证记录、审查记录、已知限制 |
+| [`docs/code-review-2026-10-20.md`](docs/code-review-2026-10-20.md) | 交付前独立审阅：缺陷、红证据、判定不改的理由、残留风险 |
+| [`docs/ledger.md`](docs/ledger.md) | 决策记录（无 git 环境时期起执行记录，现随仓库保留） |
+| [`docs/plans/`](docs/plans/) | 实施计划与逐步勾选记录 |
+
 ## 运行
 
 ```bash

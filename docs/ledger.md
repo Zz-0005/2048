@@ -1,8 +1,9 @@
 # Ledger — 2048 implementation (PRD-2048 v2.0)
 
 Plan: `docs/plans/2026-10-20-2048-game.md`
-Spec: `C:\Users\Zz\Documents\Codex\2026-10-20\2048-prd-2048-v1-0-github\outputs\2048-PRD-approved-v2.0.docx`
-(text extract kept at `docs/PRD-2048-v2.0-extract.txt`)
+Spec: the approved PRD, committed as `docs/PRD-2048-v2.0.docx` with a readable
+rendering at `docs/PRD-2048-v2.0.md` (`tools/prd_to_markdown.py` regenerates it)
+
 
 Execution was inline (this session). Version control was unavailable: `git init`
 fails on this host with `Permission denied` when creating `.git`, in every path
@@ -200,3 +201,12 @@ Live verification in Edge against `https://zz-0005.github.io/2048/`: HTTP 200, 1
 two starting tiles, keyboard moves register, the win dialog shows, Esc returns focus to
 the board, footer reads 版本 2.0.0, zero console errors (so the shipped CSP is satisfied
 on Pages).
+
+## PRD committed to the repository (2026-10-20)
+
+The repository only carried a plain-text extract of the PRD, which made the spec hard to
+read on GitHub and left the approved .docx outside the project. `docs/PRD-2048-v2.0.docx`
+is now committed verbatim, and `tools/prd_to_markdown.py` renders it to
+`docs/PRD-2048-v2.0.md` (headings, 14 tables, document order preserved) so the
+requirements, acceptance table and NFRs are readable and diffable in the browser. The
+extract .txt was removed to leave one source of truth.
