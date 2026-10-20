@@ -183,3 +183,20 @@ does not exist, `gh` has no token, `github.com:443` is unreachable from this mac
 workspace accepts `.git`. The staged repository at
 `C:\Users\Zz\Documents\deepseek-harness\default-workspace\2048-github` holds the commit
 ready to push (`b0122ff`).
+
+## GitHub Pages live (2026-10-20)
+
+`Zz-0005/2048` was created by hand, pushed over SSH (tag `v2.0.0` included), and now
+deploys through `.github/workflows/pages.yml` on every push to `main`.
+
+Two dead ends were hit first and are worth remembering: `actions/configure-pages` with
+`enablement: true` cannot create the Pages site with the default `GITHUB_TOKEN` (the step
+failed with a 403 the run logs do not spell out), and `gh auth login --web` cannot finish
+because `github.com:443` is unreachable from this machine while `api.github.com` and
+`ssh.github.com` are fine. Enabling Pages needs one human action in the repository
+settings; after that the workflow does everything.
+
+Live verification in Edge against `https://zz-0005.github.io/2048/`: HTTP 200, 16 cells,
+two starting tiles, keyboard moves register, the win dialog shows, Esc returns focus to
+the board, footer reads 版本 2.0.0, zero console errors (so the shipped CSP is satisfied
+on Pages).
