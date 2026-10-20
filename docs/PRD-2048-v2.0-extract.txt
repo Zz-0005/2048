@@ -1,0 +1,298 @@
+[Title] 2048 产品需求文档
+[Normal] v2.0 · 批准稿（Approved）· 面向产品、设计、工程、测试与 agent 执行
+[Heading 1] 0. 文档控制
+=== TABLE ===
+字段 | 内容
+文档 ID | PRD-2048
+版本 | v2.0
+状态 | 已批准（Approved），可进入开发
+上一版本 | v1.0-rc（评审修订版）
+本次范围 | 响应式 Web；桌面键盘 + 移动端触摸；无账号、无服务端排行榜
+默认语言 | zh-CN；文案资源化，本版本不承诺完整中英文切换
+Owner | 产品负责人（待补充姓名）
+参考实现 | gabrielecirulli/2048，MIT License
+需求关键词 | MUST 上线验收必须满足；SHOULD 本版本优先；MAY 后续可选
+=== END TABLE ===
+[Heading 2] 0.1 v2.0 相对 v1.0-rc 的变更
+=== TABLE ===
+# | 变更 | 位置
+1 | F2 明确“读取与合并均从移动方向一侧开始”，并新增右移测试向量 | F2、AT-003b
+2 | 新增 AT-018：同一次有效移动同时产生 2048 与满盘无可合并，先胜利、继续后结束 | F6、第 9 节
+3 | F5 给出 Esc 与遮罩的默认行为，不再留待设计决定 | F5
+4 | F8 量化“近似对角线”判定阈值 | F8、AT-014
+5 | 7.2 增加 emit() payload 字段白名单，明确不含可识别信息 | 7.2
+6 | 统一 10.2 与附录 A 的 AT 范围，明确 AT-013 仅在 P1 交付时纳入 | 10.2、附录 A
+7 | M-002 与“阻断错误为 0”的取证方式对齐 | 第 2 节、10.2
+8 | 文档状态改为 v2.0 批准稿 | 0. 文档控制
+9 | P1 当前局恢复决策设截止：需求冻结时未决则默认不纳入 | 0.3 D-003、13.2
+10 | 13.2 关闭已决问题，仅保留必须由业务方回答的开放问题 | 13.2
+=== END TABLE ===
+[Heading 2] 0.2 关键问题与优化原因
+=== TABLE ===
+优先级 | 原 PRD 问题 | 影响 | 修订动作 | 验收证据
+P0 | 留存、成功率无分母、窗口、数据源；静态站无上报链路 | 指标无法测量 | 上线门槛改为可自动化的规则、性能和错误指标；留存列为数据链路就绪后验证 | M-001~M-005
+P0 | 用户故事承诺关闭后继续，但数据只存 bestScore | 承诺与实现冲突 | V1.0 P0 保留最高分；当前局恢复列为 P1，定义 gameState schema | D-003、F7、AT-013
+P0 | 合并扫描顺序、连锁合并、胜负优先级无测试向量 | 不同实现结果不同 | 纯函数规则、不变量、固定 RNG 测试向量 | AT-002~AT-010、AT-018
+P0 | Android 2.3、Windows Phone 与“主流浏览器”并列 | 范围过宽且过时 | 只承诺主流浏览器最近两个大版本 | NFR-003、QA-001
+P1 | 手势、动画、键盘、弹层、存储异常不可测 | 回归依赖人工感觉 | 阈值、状态机、焦点规则、降级行为、测试证据 | F2、F5、F8、NFR-004
+P1 | 埋点无 SDK、同意、匿名化与失败处理 | 隐私合规风险 | V1.0 不做远端分析，保留本地事件接口与字段白名单 | D-005、7.2
+P2 | 撤销、排行榜、PWA、主题混入本期 | 隐性承诺 | 迁入后续机会池 | 第 12 节
+=== END TABLE ===
+[Heading 2] 0.3 评审后的产品决策
+=== TABLE ===
+决策 ID | 决策 | 原因
+D-001 | V1.0 只支持响应式 Web，不承诺原生 App、PWA 离线或 Windows Phone | 先验证核心玩法，降低平台变量
+D-002 | 默认中文 zh-CN；文案资源化，为后续英文切换留接口 | 避免中英文混用但无切换入口
+D-003 | bestScore 为 P0；当前局恢复为 P1。需求冻结时若未决定纳入排期，默认不纳入 V1.0；未实现时页面不得声称“关闭后继续” | 让承诺与交付范围一致，并给决策设截止
+D-004 | 胜利是独立状态；首次出现 2048 弹一次，继续后进入 playing_after_win | 防止胜利层和结束层混淆
+D-005 | V1.0 不启用远端用户分析；事件仅通过可替换的本地接口触发，不收集敏感数据 | 静态部署无数据治理与上报授权
+D-006 | 随机数可注入；生产用 Math.random，测试用固定序列或 seed | 让概率与边界规则可重复验证
+=== END TABLE ===
+[Heading 1] 1. 产品契约
+[Heading 2] 1.1 问题与定位
+[List Bullet] 问题：用户在碎片时间需要一个无需注册、规则能在几秒内理解、单局可随时中断的轻量益智体验。
+[List Bullet] 一句话定位：2048 是一款 3–10 分钟内可开始、可暂停、可重复挑战的数字合并游戏。
+[List Bullet] 核心价值：低学习成本、即时反馈、明确目标和个人最高分。
+[List Bullet] 首要用户：移动端碎片时间玩家；次要用户为使用键盘追求高分的挑战型玩家。
+[List Bullet] 平台范围：桌面 Web + 移动 Web；无后端依赖。
+[Heading 2] 1.2 本版本目标
+[Normal] 1. 玩家在首屏 10 秒内理解“移动、合并、目标 2048”。
+[Normal] 2. 核心规则在桌面和移动端一致，所有有效移动、分数和胜负状态可自动化验证。
+[Normal] 3. 页面在受限网络下快速可交互，localStorage 不可用时仍能继续游戏。
+[Normal] 4. 最高分在刷新或重新开始后保留；当前局恢复作为 P1 交付项，不在未实现时对外承诺。
+[Heading 2] 1.3 非目标
+[List Bullet] 账号、云存档、服务端排行榜、多人对战、关卡、道具、广告和付费。
+[List Bullet] 完整国际化、原生 App、离线 PWA、撤销、主题商店、音效和社交分享。
+[Heading 2] 1.4 可证伪假设
+=== TABLE ===
+假设 | 验证方式 | 通过条件
+H-001 新用户能在第一次移动后理解合并 | 5 人可用性走查或首局首次有效移动率 | ≥80% 完成一次有效移动；若无数据则记录为待测，不伪造结果
+H-002 最高分能驱动重玩 | 上报链路批准后观察 7 日内 restart/有效局比例 | 作为实验指标，不作为 v1.0 上线阻断
+=== END TABLE ===
+[Heading 1] 2. 成功指标与测量口径
+=== TABLE ===
+ID | 指标 | 定义/公式 | 目标 | 数据源 | 观察窗口 | Owner
+M-001 | 规则回归通过率 | 规则引擎单测通过数 / 规则用例总数 | 100% | CI | 每次提交 | 工程
+M-002 | 核心流程错误率 | 无 JS 未捕获错误的核心会话 / 核心会话总数 | ≥99.5%；监控获批后启用 | 错误监控（V1.0 默认待接入） | 上线后 7 日 | 工程
+M-003 | 首屏可交互 | 首次输入可响应（TTI 近似） | p75 ≤2s，良好 3G | Lighthouse / 真实设备采样 | 发布前 | 工程
+M-004 | 首次有效移动率 | 新局产生第一次有效移动的会话 / 新局会话 | ≥95%；需可用数据链路 | 本地事件或匿名分析 | 上线后 7 日 | 产品
+M-005 | 次日留存 | D+1 再次打开并产生有效移动的匿名新局用户 / D0 新局用户 | ≥25%；待数据链路与隐私方案批准 | 匿名分析 | 上线后 30 日 | 产品
+=== END TABLE ===
+[Normal] 口径约束：M-004、M-005 无上报链路时必须标记为 TBD，不得用静态页面日志声称达标。
+[Normal] M-002 取证方式（与 10.2 对齐）：V1.0 若错误监控未获批，“阻断错误为 0”以 CI 全绿 + 浏览器矩阵 AT-015 + 真机走查记录取证；M-002 作为监控获批后的补充指标，不作为 V1.0 发布阻断项。
+[Heading 1] 3. 用户、场景与故事
+[Heading 2] 3.1 用户角色
+=== TABLE ===
+角色 | 优先级 | 任务 | 成功感
+碎片时间玩家 | P0 | 立即开始并完成一局或随时离开 | 规则无需解释，分数即时反馈
+挑战型玩家 | P1 | 追求最高分、合成 2048 以上 | 最高分稳定保存，胜利后可继续
+移动端玩家 | P0 | 单手滑动，不误触页面滚动 | 四方向识别稳定，棋盘适配小屏
+=== END TABLE ===
+[Heading 2] 3.2 用户故事
+[List Bullet] US-001 作为新用户，我打开页面即可看到 4×4 棋盘、两个初始方块和简短玩法说明。
+[List Bullet] US-002 作为玩家，我使用方向键或滑动后，相同数字按规则合并，分数增加并出现一个新方块。
+[List Bullet] US-003 作为玩家，我刷新页面或重新开始后，最高分仍然保留。
+[List Bullet] US-004 作为玩家，我合成 2048 时看到胜利提示，并可选择继续。
+[List Bullet] US-005 作为玩家，我在满盘且无可合并时看到结束提示、最终分数和重新开始入口。
+[List Bullet] US-006 作为移动端玩家，我滑动棋盘时页面不跟随滚动。
+[List Bullet] US-007（P1，条件交付） 作为中断的玩家，我重新打开页面后可以恢复当前局；若恢复数据损坏，系统以新局安全降级。若需求冻结时 D-003 未决定纳入本期，本故事移入第 12 节机会池，页面不得声称“关闭后继续”。
+[Heading 1] 4. 状态模型与不变量
+[Heading 2] 4.1 状态
+[Normal] ready -> playing -> win_pending -> playing_after_win
+playing -> game_over
+win_pending -> ready (New Game)
+game_over -> ready (New Game)
+playing_after_win -> game_over | ready
+任何状态 -> storage_degraded（仅表示存储降级，不阻断玩法）
+[Heading 2] 4.2 不变量
+[List Bullet] 棋盘始终为 16 格；每个非空 tile 是 2 的幂。
+[List Bullet] 新局恰有 2 个 tile，值为 2 或 4。
+[List Bullet] 有效移动恰新增 1 个 tile；无效移动不改变棋盘、分数、步数和随机状态。
+[List Bullet] 一次移动中，一个 tile 最多参与一次合并。
+[List Bullet] 合并得分等于合并后的 tile 值。
+[List Bullet] 2048 只在本局首次出现时弹出一次；继续后不重复弹出。
+[List Bullet] 失败只在棋盘满且不存在横向或纵向可合并邻居时成立。
+[List Bullet] 同一次有效移动同时满足胜利与失败条件时，先进入 win_pending；玩家选择继续后进入 game_over。
+[Heading 1] 5. 功能需求
+[Heading 2] F1 初始化与新局 [P0][MUST]
+[List Bullet] 触发：首次打开或点击“新局”。
+[List Bullet] 行为：清空棋盘，当前分数和步数归零；生成两个不同空位的 tile，值按 2=90%、4=10%；保留并先写入最高分。
+[List Bullet] 异常：localStorage 失败只进入内存模式；不得阻断新局。
+[List Bullet] 验收：AT-001、AT-011、AT-012。
+[Heading 2] F2 移动与合并 [P0][MUST]
+[List Bullet] 触发：ArrowUp/Down/Left/Right 或四方向滑动。
+[List Bullet] 前置：state 为 playing 或 playing_after_win。
+[List Bullet] 算法顺序：从移动方向一侧开始读取 → 去零压紧 → 相邻同值只合并一次 → 补零 → 结算分数 → 生成一个新 tile → 判断胜利/失败。
+[List Bullet] 读取与合并方向约束：所有方向的读取、压紧、合并均从移动方向一侧开始，保证同一行/列在不同方向下结果确定。
+[List Bullet] 无效移动：棋盘未变化时不生成、不加分、不增加步数。
+[List Bullet] 验收：AT-002~AT-006、AT-003b。
+[Heading 2] F3 新 tile [P0][MUST]
+[List Bullet] 仅在有效移动后生成；从当前空位随机选择一个；值 2 的概率 90%，值 4 的概率 10%。
+[List Bullet] 测试必须支持注入 RNG；生产不要求固定随机序列。
+[List Bullet] 验收：AT-005、AT-007。
+[Heading 2] F4 分数与最高分 [P0][MUST]
+[List Bullet] 合并后值累加到当前分数；当前分数和最高分实时显示。
+[List Bullet] 当前分数超过最高分时立即更新内存并尝试写入；写入失败不弹阻断错误。
+[List Bullet] 验收：AT-003、AT-004、AT-011、AT-012。
+[Heading 2] F5 胜利 [P0][MUST]
+[List Bullet] 本局首次出现 2048 时进入 win_pending，展示“你赢了”、当前分数、“继续游戏”和“重新开始”。
+[List Bullet] 选择继续后进入 playing_after_win，允许合成 4096 等，不再重复胜利弹层。
+[List Bullet] Esc / 遮罩默认行为：Esc 仅关闭弹层并保持 win_pending 状态与棋盘不变，不触发继续或新局；点击遮罩不关闭弹层。若设计后续要改，需走变更记录。
+[List Bullet] 验收：AT-008、AT-018。
+[Heading 2] F6 失败 [P0][MUST]
+[List Bullet] 只有棋盘全满且没有可合并邻居时进入 game_over。
+[List Bullet] 展示最终分数、最高分和“重新开始”；重新开始保留最高分。
+[List Bullet] 若同一次有效移动同时产生 2048 和无可移动局面，先展示胜利，玩家选择继续后再展示结束。
+[List Bullet] 胜利与失败同时触发：同一次有效移动同时产生 2048 与无可移动局面时，先展示胜利；玩家选择继续后立即展示结束。
+[List Bullet] 验收：AT-009、AT-010、AT-011、AT-018。
+[Heading 2] F7 存储 [P0/P1][MUST/SHOULD]
+[List Bullet] P0 key：bestScore，整数，读写全部 try/catch。
+[List Bullet] P1 key：gameState，JSON schema 如下：
+[Normal] {
+  "schemaVersion": 1,
+  "board": [0, 2, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  "score": 0,
+  "moves": 0,
+  "winAcknowledged": false,
+  "updatedAt": "2026-10-20T00:00:00Z"
+}
+[List Bullet] 解析失败、schema 不匹配、配额满或隐私模式下：忽略损坏数据，使用内存新局；不得因存储失败白屏。
+[List Bullet] 写入策略：有效移动、新局、页面隐藏前尝试写入；多标签页最后写入胜出，本版本不做冲突合并。
+[List Bullet] 页面隐藏写入失败：静默忽略，下次打开按无快照处理，不弹阻断提示。
+[List Bullet] 验收：AT-012、AT-013（仅 P1 交付时）。
+[Heading 2] F8 手势与输入 [P0][MUST]
+[List Bullet] 触摸起点与终点最大轴位移至少 24px；取水平/垂直位移较大者判定方向。
+[List Bullet] 近似对角线判定：主轴位移 / 次轴位移 < 1.5 时视为斜向，忽略本次手势；短触与多指不触发。
+[List Bullet] 棋盘设置 touch-action: none 与 overscroll-behavior: contain；触摸移动时阻止页面滚动。
+[List Bullet] 键盘操作必须可完成全部玩法；焦点可见。
+[List Bullet] 验收：AT-014、QA-001。
+[Heading 2] F9 玩法说明与反馈 [P1][SHOULD]
+[List Bullet] 首屏显示：“使用方向键或滑动移动方块，相同数字合并，目标合成 2048”。
+[List Bullet] 新 tile 缩放淡入；合并轻微回弹；分数浮出；单个动效 100–200ms，不能锁死输入。
+[List Bullet] prefers-reduced-motion: reduce 时关闭非必要动画。
+[Heading 1] 6. UX、视觉与可访问性
+[List Bullet] 页面结构：产品名、当前分数、最高分、新局；棋盘；说明；胜利/失败层；版本与 MIT 归属。
+[List Bullet] 默认语言 zh-CN；按钮使用“新局”“继续游戏”“重新开始”，避免无入口的中英文混用。
+[List Bullet] 断点：小屏 320px 起；棋盘宽度随视口缩放，保留安全区；禁止横向滚动。
+[List Bullet] 棋盘必须使用 role=grid、格子使用 role=gridcell；数字变化通过 aria-live 或等价机制播报；弹层有可读名称，打开时聚焦主按钮，关闭后回到触发控件。
+[List Bullet] 颜色不能是唯一信息来源；正文和 tile 数字满足 WCAG AA 对比度目标；焦点环清晰。
+[List Bullet] 新局按钮不强制二次确认；当前局恢复或重开前应按 D-003 处理未保存状态。
+[Heading 1] 7. 数据、隐私与事件接口
+[Heading 2] 7.1 本地数据
+=== TABLE ===
+key | 类型 | 版本 | 说明
+bestScore | integer | 1 | 最高分，失败按 0 处理
+gameState | JSON | 1 | P1 当前局快照
+=== END TABLE ===
+[Heading 2] 7.2 事件接口
+[Normal] V1.0 不向第三方发送事件，不收集账号、精确位置或设备标识。代码通过 emit(eventName, payload) 触发本地事件，供自动化测试或未来经批准的匿名分析适配器使用。任何远端接入必须新增隐私说明、同意机制、保留周期与关闭开关。
+[Normal] 允许的最小事件：game_start、move、merge、game_win、game_over、restart、storage_error。
+=== TABLE ===
+事件 | 允许字段
+game_start | source（如 new_game / restore）
+move | direction、score、maxTile、moves
+merge | mergedValue、score
+game_win | moves、durationMs
+game_over | score、maxTile、moves、durationMs
+restart | score
+storage_error | operation（read / write）、key
+=== END TABLE ===
+[Normal] 约束：payload 不得包含可识别个人或设备的信息（姓名、账号、IP、设备 ID、精确位置、自由文本）。事件失败不得阻断游戏。
+[Heading 1] 8. 非功能需求
+=== TABLE ===
+ID | 类别 | 要求 | 测试方法
+NFR-001 | 性能 | 首屏可交互 p75 ≤2s（良好 3G），单次移动 JS 处理 ≤100ms | Lighthouse + 性能标记
+NFR-002 | 稳定性 | 核心规则回归 100% 通过；无存储时仍可玩 | CI + 异常注入
+NFR-003 | 兼容性 | Chrome/Edge/Firefox/Safari 最近两个大版本；iOS Safari/Android Chrome 最近两个版本 | 浏览器矩阵
+NFR-004 | 可访问性 | 键盘可玩、焦点可见、弹层可读、减少动画有效 | axe + 键盘走查
+NFR-005 | 安全 | HTTPS 部署；CSP；不执行远端用户输入；MIT LICENSE 与归属完整 | 发布检查
+NFR-006 | 可维护性 | 逻辑、样式、页面分离；纯函数移动引擎可单测；需求 ID 与 AT ID 可追溯 | 代码评审
+=== END TABLE ===
+[Heading 1] 9. 验收测试
+=== TABLE ===
+ID | 前置/动作 | 期望结果 | 证据
+AT-001 | 新局 | 恰有 2 个 tile，值均为 2 或 4 | 单测截图/断言
+AT-002 | [2,0,2,0] 左移 | [4,0,0,0]，得分 +4 | 规则单测
+AT-003 | [2,2,2,0] 左移 | [4,2,0,0]，得分 +4 | 规则单测
+AT-003b | [2,2,2,0] 右移 | [0,0,2,4]，得分 +4（验证从移动方向一侧开始合并） | 规则单测
+AT-004 | [2,2,2,2] 左移 | [4,4,0,0]，得分 +8 | 规则单测
+AT-005 | 任意有效移动 | 恰新增 1 个 tile | 规则单测
+AT-006 | 无法移动方向 | 棋盘、分数、步数与随机状态不变 | 规则单测
+AT-007 | 注入固定 RNG | 新 tile 按 90/10 配置生成 | 统计/固定序列测试
+AT-008 | 首次出现 2048，继续，再次达到 2048 | 胜利层只出现一次，继续后仍可移动 | E2E
+AT-009 | 满盘且无邻接同值 | 进入 game_over，显示分数与最高分 | 规则单测 + E2E
+AT-010 | 满盘但仍有邻接同值 | 不进入 game_over，可合并 | 规则单测
+AT-011 | 当前分数高于最高分后点击新局 | 当前分数清零，最高分保留且已写入 | E2E
+AT-012 | localStorage 读写抛异常 | 游戏仍可开始、移动、结束；不白屏 | 异常注入
+AT-013 | 刷新页面（仅 P1 交付时纳入） | 恢复合法 gameState；损坏数据安全新局 | E2E
+AT-014 | 四向键盘与触摸滑动 | 方向正确，滑动不滚动页面；斜向/短触/多指不触发 | 真机/浏览器
+AT-015 | 主流浏览器完成核心流程 | 无 console error | 浏览器矩阵
+AT-016 | 键盘 Tab、Esc、读屏走查 | 控件可达、弹层可读、焦点回收 | axe + 人工
+AT-017 | 发布包检查 | LICENSE、版权与参考仓库链接存在 | 发布清单
+AT-018 | 同一次有效移动同时产生 2048 与满盘无可合并 | 先展示胜利；选择继续后立即展示结束 | 规则单测 + E2E
+=== END TABLE ===
+[Heading 1] 10. QA 与发布
+[Heading 2] 10.1 QA 顺序
+[Normal] 1. 纯函数规则单测：合并、无效移动、胜负、RNG 注入、AT-003b、AT-018。
+[Normal] 2. E2E：新局、得分、胜利继续、失败重开、最高分、存储异常。
+[Normal] 3. 真机：iOS Safari、Android Chrome、横竖屏、小屏安全区、手势滚动。
+[Normal] 4. 可访问性：键盘、焦点、读屏、对比度、减少动画。
+[Normal] 5. 性能：良好 3G p75 TTI、移动响应 ≤100ms。
+[Heading 2] 10.2 发布门槛
+[List Bullet] 必过：AT-001~AT-012、AT-014、AT-015、AT-017、AT-018 全部通过。
+[List Bullet] 条件必过：AT-013 仅在 P1 当前局恢复交付时纳入门槛；AT-016 随可访问性走查记录纳入。
+[List Bullet] NFR-001~NFR-006 有测试证据。
+[List Bullet] “阻断错误为 0”取证：CI 全绿 + 浏览器矩阵 AT-015 + 真机走查记录；M-002 作为监控获批后的补充指标，不作为 V1.0 发布阻断项。
+[List Bullet] 发布产物包含版本号、LICENSE、静态资源与回滚包；HTTPS 与 CSP 生效。
+[Heading 2] 10.3 回滚与观察
+[List Bullet] 预览环境通过后再发布正式静态包；保留上一个可用版本。
+[List Bullet] 发布后 24 小时观察页面加载失败、JS 错误（若监控已批准）与用户反馈；发现阻断缺陷立即切回上一版本。
+[Heading 1] 11. 里程碑、依赖与风险
+=== TABLE ===
+阶段 | 交付物 | 退出条件
+需求冻结 | 本文档、决策记录、真值表 | P0 规则与平台矩阵确认；D-003 的 P1 是否纳入本期已决
+开发 | 页面、规则引擎、存储、输入 | AT-001~AT-012、AT-018 本地通过
+QA | 浏览器/真机/无障碍/性能报告 | 10.2 门槛全部通过
+发布 | 静态包、LICENSE、回滚包 | 预览通过且版本可追溯
+=== END TABLE ===
+[Normal] 主要风险：存储不可用、移动端手势误判、动效引入输入竞态、旧浏览器差异、指标无合法数据源。每项风险须在发布前有异常注入或兼容性证据。
+[Heading 1] 12. 后续机会池
+[Normal] MAY：撤销一步、PWA 离线、英文切换、音效/主题、分享卡片、匿名排行榜、无障碍增强、当前局恢复（若 V1.0 未纳入）。
+[Normal] 每个机会进入正式排期前，需补充用户证据、指标、隐私评估与验收用例。
+[Heading 1] 13. 变更记录与开放问题
+[Heading 2] 13.1 变更记录
+=== TABLE ===
+版本 | 日期 | 变更
+v1.0 | 2026-10-20 | 基于原始 PRD 完成产品评审；补齐产品契约、指标口径、状态机、存储决策、确定性测试、可访问性与发布门槛
+v1.0-rc | 2026-10-20 | 评审修订：目标口径、存档边界、规则真值表、交互异常、埋点隐私
+v2.0 | 2026-10-20 | 批准稿：合并方向约束、AT-003b/AT-018、Esc/遮罩默认行为、斜向阈值、payload 白名单、AT 范围与 M-002 取证对齐、D-003 决策截止
+=== END TABLE ===
+[Heading 2] 13.2 开放问题（仅保留需业务方回答的项）
+[List Bullet] Q-001 产品负责人是否批准未来接入匿名分析？如批准，需单独的数据与隐私评审（影响 M-004、M-005 与 7.2 远端适配器）。
+[List Bullet] Q-002 Owner、设计负责人、工程负责人与 QA 负责人姓名待补充（不影响开发启动，但影响发布签字）。
+[Normal] 已关闭：P1 当前局恢复是否纳入本期——按 D-003，需求冻结时未决则默认不纳入 V1.0，US-007 与 AT-013 随之移入条件项/机会池。
+[Heading 1] 附录 A：实现契约
+[Normal] deliverables:
+  - index.html
+  - styles.css
+  - script.js
+deployment: static-hosting
+backend: none
+test_entry: rule-engine-unit-tests-and-browser-e2e
+definition_of_done:
+  - AT-001..AT-012 pass
+  - AT-014..AT-018 pass
+  - AT-013 pass if P1 game-state restore is delivered
+  - AT-016 accessibility walkthrough recorded
+  - NFR-001..NFR-006 evidence attached
+  - LICENSE and attribution present
+[Heading 1] 附录 B：许可证与归属
+[Normal] 保留原项目 MIT License 文本、原作者 Gabriele Cirulli 归属和参考仓库链接；本项目的修改说明应放入发布包的 NOTICE 或 README。
+[Heading 1] 批准签字
+=== TABLE ===
+角色 | 姓名 | 日期 | 签字
+产品负责人 |  |  | 
+设计负责人 |  |  | 
+工程负责人 |  |  | 
+QA 负责人 |  |  | 
+=== END TABLE ===

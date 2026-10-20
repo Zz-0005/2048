@@ -1,0 +1,19 @@
+{
+  "name": "game-2048",
+  "version": "1.0.0",
+  "private": true,
+  "description": "2048 — responsive static web game (PRD-2048 v2.0)",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test \"tests/*.test.mjs\"",
+    "test:unit": "node --test tests/engine.test.mjs tests/session.test.mjs tests/outcome.test.mjs tests/storage.test.mjs",
+    "test:e2e": "node --test tests/ui.e2e.test.mjs tests/layout.e2e.test.mjs tests/acceptance.e2e.test.mjs",
+    "serve": "node tests/serve.mjs",
+    "build:single": "node tools/build-standalone.mjs",
+    "shots": "node tests/shots.mjs"
+  },
+  "devDependencies": {
+    "axe-core": "^4.14.0",
+    "playwright-core": "^1.64.1"
+  }
+}

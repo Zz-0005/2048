@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'">
+<meta name="description" content="2048：滑动或按方向键移动方块，相同数字合并，目标合成 2048。">
+<meta name="theme-color" content="#faf8ef">
+<title>2048 · 数字合并</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23bbada0'/%3E%3Ctext x='16' y='23' font-family='sans-serif' font-size='15' font-weight='700' text-anchor='middle' fill='%23fff'%3E2%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main class="app">
+  <div class="game" id="game-surface">
+  <div class="panel">
+  <header class="topbar">
+    <div class="brand">
+      <h1 class="brand__title">2048</h1>
+      <p class="brand__rule">相同数字合并，目标 2048</p>
+    </div>
+    <div class="scores">
+      <div class="score">
+        <span class="score__label">当前分数</span>
+        <strong class="score__value" id="score" data-testid="score">0</strong>
+      </div>
+      <div class="score score--best">
+        <span class="score__label">最高分</span>
+        <strong class="score__value" id="best" data-testid="best">0</strong>
+      </div>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <button type="button" class="button" id="new-game" data-testid="new-game">新局</button>
+    <button type="button" class="button button--accent" id="resume-win" data-testid="resume-win" hidden>继续游戏</button>
+    <p class="status" id="storage-status" data-testid="storage-status" role="status" hidden>
+      存储不可用：最高分仅在本次打开期间保留。
+    </p>
+  </div>
+  </div>
+
+  <div class="board-wrap">
+    <div class="board" id="board" data-testid="board" role="grid" aria-label="2048 棋盘，4 行 4 列" aria-describedby="board-help" tabindex="0">
+      <div class="board__row" role="row">
+        <div class="cell" role="gridcell" data-index="0" data-testid="cell-0" aria-label="第 1 行第 1 列，空"></div>
+        <div class="cell" role="gridcell" data-index="1" data-testid="cell-1" aria-label="第 1 行第 2 列，空"></div>
+        <div class="cell" role="gridcell" data-index="2" data-testid="cell-2" aria-label="第 1 行第 3 列，空"></div>
+        <div class="cell" role="gridcell" data-index="3" data-testid="cell-3" aria-label="第 1 行第 4 列，空"></div>
+      </div>
+      <div class="board__row" role="row">
+        <div class="cell" role="gridcell" data-index="4" data-testid="cell-4" aria-label="第 2 行第 1 列，空"></div>
+        <div class="cell" role="gridcell" data-index="5" data-testid="cell-5" aria-label="第 2 行第 2 列，空"></div>
+        <div class="cell" role="gridcell" data-index="6" data-testid="cell-6" aria-label="第 2 行第 3 列，空"></div>
+        <div class="cell" role="gridcell" data-index="7" data-testid="cell-7" aria-label="第 2 行第 4 列，空"></div>
+      </div>
+      <div class="board__row" role="row">
+        <div class="cell" role="gridcell" data-index="8" data-testid="cell-8" aria-label="第 3 行第 1 列，空"></div>
+        <div class="cell" role="gridcell" data-index="9" data-testid="cell-9" aria-label="第 3 行第 2 列，空"></div>
+        <div class="cell" role="gridcell" data-index="10" data-testid="cell-10" aria-label="第 3 行第 3 列，空"></div>
+        <div class="cell" role="gridcell" data-index="11" data-testid="cell-11" aria-label="第 3 行第 4 列，空"></div>
+      </div>
+      <div class="board__row" role="row">
+        <div class="cell" role="gridcell" data-index="12" data-testid="cell-12" aria-label="第 4 行第 1 列，空"></div>
+        <div class="cell" role="gridcell" data-index="13" data-testid="cell-13" aria-label="第 4 行第 2 列，空"></div>
+        <div class="cell" role="gridcell" data-index="14" data-testid="cell-14" aria-label="第 4 行第 3 列，空"></div>
+        <div class="cell" role="gridcell" data-index="15" data-testid="cell-15" aria-label="第 4 行第 4 列，空"></div>
+      </div>
+    </div>
+    <p class="hint" id="board-help">使用方向键或滑动移动方块，相同数字合并，目标合成 2048。</p>
+  </div>
+
+  <footer class="footer">
+    <p>版本 1.0.0 · MIT License</p>
+    <p>
+      参考
+      <a href="https://github.com/gabrielecirulli/2048" rel="noopener noreferrer" target="_blank">gabrielecirulli/2048</a>，
+      原作者 Gabriele Cirulli；本项目改动见 NOTICE.md。
+    </p>
+  </footer>
+  </div>
+
+  <p class="visually-hidden" id="announcer" role="status" aria-live="polite" aria-atomic="true"></p>
+
+  <div class="overlay" id="overlay" data-testid="overlay" hidden>
+    <div class="overlay__dialog" role="dialog" aria-modal="true" aria-labelledby="overlay-title" aria-describedby="overlay-detail">
+      <h2 class="overlay__title" id="overlay-title" data-testid="overlay-title">你赢了</h2>
+      <p class="overlay__detail" id="overlay-detail" data-testid="overlay-detail"></p>
+      <div class="overlay__actions">
+        <button type="button" class="button" id="overlay-primary" data-testid="overlay-primary">继续游戏</button>
+        <button type="button" class="button button--ghost" id="overlay-secondary" data-testid="overlay-secondary">重新开始</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
